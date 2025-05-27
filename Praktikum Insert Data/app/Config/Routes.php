@@ -20,3 +20,7 @@ $routes->get('/books/(:segment)', 'Books::detail/$1');
 $routes->get('/about', 'Pages::about');
 $routes->get('/contact', 'Pages::contact');
 
+$routes->get('/books/edit/(:segment)', 'Books::edit/$1');
+$routes->post('/books/update/(:num)', 'Books::update/$1');
+
+
