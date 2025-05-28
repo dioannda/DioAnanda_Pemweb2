@@ -49,28 +49,45 @@ class Books extends BaseController
 
     public function save()
     {
-        if (
-            !$this->validate([
-                'judul' => 'required|is_unique[books.judul]',
-                'penulis' => 'required|is_unique[books.penulis]',
-                'penerbit' => 'required|is_unique[books.penerbit]',
-            ])
-        ) {
+        // Validasi yang lebih realistis
+        $rules = [
+            'judul' => 'required|is_unique[books.judul]',
+            'penulis' => 'required',
+            'penerbit' => 'required'
+        ];
+
+        if (!$this->validate($rules)) {
+            // Jika validasi gagal karena judul sudah ada
+            if ($this->validator->hasError('judul', 'is_unique')) {
+                session()->setFlashdata('error', 'Judul buku "' . $this->request->getVar('judul') . '" sudah ada dalam database!');
+                return redirect()->to('/books'); // Redirect ke halaman books/index
+            }
+
+            // Untuk error validasi lainnya, tetap di form create
             return redirect()->to('/books/create')->withInput()->with('validation', $this->validator);
         }
 
         $slug = url_title($this->request->getVar('judul'), '-', true);
 
-        $this->bukuModel->save([
+        $data = [
             'judul' => $this->request->getVar('judul'),
             'slug' => $slug,
             'penulis' => $this->request->getVar('penulis'),
             'penerbit' => $this->request->getVar('penerbit'),
-            'sampul' => $this->request->getVar('sampul') ?: 'default.jpg'
-        ]);
+            'sampul' => $this->request->getVar('sampul') ?? 'default.jpg'
+        ];
 
-        session()->setFlashdata('pesan', 'Data buku berhasil ditambahkan.');
-        return redirect()->to('/books');
+        // Debug data sebelum disimpan
+        // dd($data);
+
+        try {
+            $this->bukuModel->save($data);
+            session()->setFlashdata('pesan', 'Data buku berhasil ditambahkan.');
+            return redirect()->to('/books');
+        } catch (\Exception $e) {
+            // Tangkap error dan tampilkan
+            die($e->getMessage());
+        }
     }
 
     public function delete($id)
